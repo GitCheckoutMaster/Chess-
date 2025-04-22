@@ -95,17 +95,32 @@ class Board:
     index = row * 8 + col
     piece = self.board[index]
 
+    if self.active_piece is not None and ((self.active_piece.isupper() and self.FEN.split(" ")[1] == "b") or (self.active_piece.islower() and self.FEN.split(" ")[1] == "w")):
+      self.board[self.active_square] = self.active_piece
+      self.active_piece = None
+      self.active_square = None
+      self.update_fen()
+      return
+
     if self.active_piece is not None:
       if piece == "":
         self.board[index] = self.active_piece
+        self.change_turn()
       else:
         active_piece_color = 8 if self.active_piece.isupper() else 16
         target_piece_color = 8 if piece.isupper() else 16
         if active_piece_color != target_piece_color:
           self.board[index] = self.active_piece
+          self.change_turn()
         else:
           self.board[self.active_square] = self.active_piece
       
       self.active_piece = None
       self.active_square = None
     self.update_fen()
+
+  def change_turn(self):
+    if self.FEN.split(" ")[1] == "w":
+      self.FEN = self.FEN.replace("w", "b")
+    else:
+      self.FEN = self.FEN.replace("b", "w")
