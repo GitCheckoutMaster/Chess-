@@ -7,7 +7,9 @@ class Board:
     self.active_square = None
     self.active_color = (238,238,210)
     self.highlighted_square = []
-    self.FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    self.highlighted_legal_moves = []
+    # self.FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    self.FEN = "8/8/2r3q1/3B4/8/2b2R2/8/2Q5 w - - 0 1"
     self.board = [""] * 64
     # self.board = [
     #   "r", "n", "b", "q", "k", "b", "n", "r",
@@ -28,7 +30,13 @@ class Board:
         if (i + j) % 2 != 0:
           color = (118, 150, 86)
         idx = i * 8 + j
-        pygame.draw.rect(screen, self.active_color if idx in self.highlighted_square else color, (j * 60, i * 60, 60, 60))
+        
+        if idx in self.highlighted_legal_moves:
+          pygame.draw.rect(screen, (0, 255, 0), (j * 60, i * 60, 60, 60))
+        elif idx in self.highlighted_square:
+          pygame.draw.rect(screen, (255, 0, 0), (j * 60, i * 60, 60, 60))
+        else:
+          pygame.draw.rect(screen, color, (j * 60, i * 60, 60, 60))
 
         # Draw the pieces
         piece = self.board[i * 8 + j]
@@ -37,7 +45,7 @@ class Board:
         if self.active_square is not None:
           screen.blit(Piece.pieces_img.get(self.active_piece, None), (pygame.mouse.get_pos()[0] - 30, pygame.mouse.get_pos()[1] - 30))
                 
-  # rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+
   def load_fen(self):
     i = 0
     # ROW, COL = 0, 0
@@ -98,7 +106,7 @@ class Board:
     col = mouse_x // 60
     index = row * 8 + col  
 
-    if self.active_piece is not None and ((self.active_piece.isupper() and self.FEN.split(" ")[1] == "b") or (self.active_piece.islower() and self.FEN.split(" ")[1] == "w") or (index < 0 or index >= 64)):
+    if self.active_piece is not None and ((self.active_piece.isupper() and self.FEN.split(" ")[1] == "b") or (self.active_piece.islower() and self.FEN.split(" ")[1] == "w") or (index < 0 or index >= 64)) or (self.active_square == index):
       self.board[self.active_square] = self.active_piece
       self.active_piece = None
       self.active_square = None
@@ -142,3 +150,19 @@ class Board:
       self.FEN = self.FEN.replace("w", "b")
     else:
       self.FEN = self.FEN.replace("b", "w")
+  
+  def highlight_legal_moves(self, legal_moves):
+    row = pygame.mouse.get_pos()[1] // 60
+    col = pygame.mouse.get_pos()[0] // 60
+    idx = row * 8 + col
+    piece = self.active_piece if self.active_piece is not None else self.board[idx]
+
+
+    if piece == "" or (piece.isupper() and self.FEN.split(" ")[1] == "b") or (piece.islower() and self.FEN.split(" ")[1] == "w"):
+      self.highlighted_legal_moves = []
+      return
+
+    legal_moves = legal_moves.get(self.active_square, [])
+    print(piece, legal_moves)
+    for move in legal_moves:
+      self.highlighted_legal_moves.append(move)

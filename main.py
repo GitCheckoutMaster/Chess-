@@ -1,5 +1,6 @@
 import pygame
 import board
+import moves
 from piece import Piece
 
 # pygame setup
@@ -7,8 +8,9 @@ pygame.init()
 screen = pygame.display.set_mode((480, 480))
 clock = pygame.time.Clock()
 running = True
-board = board.Board()
 
+board = board.Board()
+moves = moves.Moves()
 board.load_fen()
 board.print_board(screen)
 
@@ -18,6 +20,7 @@ while running:
       running = False
     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
       board.mouse_down()
+      board.highlight_legal_moves(moves.legal_moves)
       board.load_fen()
         
     if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
@@ -30,6 +33,7 @@ while running:
 
   # RENDER YOUR GAME HERE
   board.print_board(screen)
+  moves.generate_legal_moves_for_sliding_pieces(board.board, board.FEN.split(" ")[1])
 
   # flip() the display to put your work on screen
   pygame.display.flip()
