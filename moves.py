@@ -13,29 +13,59 @@ class Moves:
       col = source_idx % 8
 
       for offset in offsets:
-        target_idx = source_idx + offset
-        i, j = row, col
-        while 0 <= target_idx < 64 and (i == row or j == col):
-          if board[target_idx] == "" or (board[target_idx].isupper() and turn == "b") or (board[target_idx].islower() and turn == "w"):
-            self.legal_moves[source_idx].append(target_idx)
-          if board[target_idx] != "":
-            break
-          target_idx += offset
-          if offset != 7 and offset != 9:
-            i = (target_idx // 8)
-            j = (target_idx % 8)
+        
+        target_idx = source_idx
+        i, j = target_idx // 8, target_idx % 8
+        displacement = 0
 
-        target_idx = source_idx - offset
-        i, j = row, col
-        while 0 <= target_idx < 64 and (i == row or j == col):
-          if board[target_idx] == "" or (board[target_idx].isupper() and turn == "b") or (board[target_idx].islower() and turn == "w"):
+        while 0 <= target_idx < 64 and (i == row or j == col or (offset == 7 or offset == 9)):
+          
+          if (target_idx != source_idx) and board[target_idx] == "" or (board[target_idx].isupper() and turn == "b") or (board[target_idx].islower() and turn == "w"):
+            
+            if (offset == 7 and (row != i - displacement or col != j + displacement)) or (offset == 9 and (row != i - displacement or col != j - displacement)):
+              break
+
             self.legal_moves[source_idx].append(target_idx)
-          if board[target_idx] != "":
+          if (target_idx != source_idx) and board[target_idx] != "":
             break
+
+          
+          # if the piece is a bishop or queen, check for diagonal moves and break if it hits the edge of the board
+          if (target_idx != source_idx) and (offset == 7 or offset == 9) and ((target_idx // 8) == 0 or (target_idx // 8) == 7 or (target_idx % 8) == 0 or (target_idx % 8) == 7):
+            break
+          
+          target_idx += offset
+
+          # if the piece is a rook or queen, check for horizontal/vertical moves and break if it hits the edge of the board
+          # if offset != 7 and offset != 9:
+          i = (target_idx // 8)
+          j = (target_idx % 8)
+          displacement += 1
+
+        target_idx = source_idx
+        i, j = target_idx // 8, target_idx % 8
+        displacement = 0
+        
+        while 0 <= target_idx < 64 and ((i == row or j == col) or (offset == 7 or offset == 9)):
+        
+          if (source_idx != target_idx) and board[target_idx] == "" or (board[target_idx].isupper() and turn == "b") or (board[target_idx].islower() and turn == "w"):
+            
+            if (offset == 7 and (row != i + displacement or col != j - displacement)) or (offset == 9 and (row != i + displacement or col != j + displacement)):
+              break
+
+            self.legal_moves[source_idx].append(target_idx)
+          if (target_idx != source_idx) and board[target_idx] != "":
+            break
+
+
+          if (target_idx != source_idx) and (offset == 7 or offset == 9) and ((target_idx // 8) == 0 or (target_idx // 8) == 7 or (target_idx % 8) == 0 or (target_idx % 8) == 7):
+            break
+
           target_idx -= offset
-          if offset != 7 and offset != 9:
-            i = target_idx // 8
-            j = target_idx % 8
+          # if offset != 7 and offset != 9:
+          i = target_idx // 8
+          j = target_idx % 8
+          displacement += 1
 
     
     #Get every piece on the board and loop over their possible moves

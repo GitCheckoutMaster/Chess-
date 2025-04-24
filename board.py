@@ -9,7 +9,7 @@ class Board:
     self.highlighted_square = []
     self.highlighted_legal_moves = []
     # self.FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-    self.FEN = "8/8/2r3q1/3B4/8/2b2R2/8/2Q5 w - - 0 1"
+    self.FEN = "8/8/1r4q1/4b3/2B5/Q4R2/8/8 w - - 0 1"
     self.board = [""] * 64
     # self.board = [
     #   "r", "n", "b", "q", "k", "b", "n", "r",
@@ -79,10 +79,14 @@ class Board:
             new_FEN += str(empty_count)
             empty_count = 0
           new_FEN += piece
-      new_FEN += str(empty_count) if empty_count > 0 else "/"
+      if empty_count > 0:
+        new_FEN += str(empty_count)
+        empty_count = 0
+      new_FEN += "/"
+      
     new_FEN = new_FEN[:-1]  # remove the last "/"
     new_FEN += " "
-    new_FEN += self.FEN.split(" ")[1]
+    new_FEN += " ".join(self.FEN.split(" ")[1:])
     self.FEN = new_FEN
 
   def mouse_down(self):
@@ -106,12 +110,15 @@ class Board:
     col = mouse_x // 60
     index = row * 8 + col  
 
-    if self.active_piece is not None and ((self.active_piece.isupper() and self.FEN.split(" ")[1] == "b") or (self.active_piece.islower() and self.FEN.split(" ")[1] == "w") or (index < 0 or index >= 64)) or (self.active_square == index):
+    if self.active_piece is not None and (((self.active_piece.isupper() and self.FEN.split(" ")[1] == "b") or (self.active_piece.islower() and self.FEN.split(" ")[1] == "w") or (index < 0 or index >= 64)) or (self.active_square == index) or index not in self.highlighted_legal_moves):
       self.board[self.active_square] = self.active_piece
       self.active_piece = None
       self.active_square = None
       self.update_fen()
-      self.highlight_square(self.highlighted_square[0], self.highlighted_square[1] if len(self.highlighted_square) > 1 else None)
+      if len(self.highlighted_square) > 1:
+        self.highlight_square(self.highlighted_square[0], self.highlighted_square[1])
+      else:
+        self.highlighted_square = []
       return
 
     piece = self.board[index]
@@ -130,7 +137,9 @@ class Board:
           self.change_turn()
         else:
           self.board[self.active_square] = self.active_piece
-          self.highlight_square(self.highlighted_square[0], self.highlighted_square[1] if len(self.highlighted_square) > 1 else None)
+          if len(self.highlighted_square) > 1:
+            self.highlight_square(self.highlighted_square[0], self.highlighted_square[1])
+          self.highlighted_square = []
       
       self.active_piece = None
       self.active_square = None
@@ -146,12 +155,18 @@ class Board:
 
   def change_turn(self):
     print("Changing turn")
+    self.highlighted_legal_moves = []
     if self.FEN.split(" ")[1] == "w":
       self.FEN = self.FEN.replace("w", "b")
     else:
+      # increase the move after black's turn and also change the turn in FEN
+      move_number = int(self.FEN.split(" ")[5]) + 1
+      new_FEN = " ".join(self.FEN.split(" ")[:5]) + " " + str(move_number)
+      self.FEN = new_FEN
       self.FEN = self.FEN.replace("b", "w")
   
   def highlight_legal_moves(self, legal_moves):
+    self.highlighted_legal_moves = []
     row = pygame.mouse.get_pos()[1] // 60
     col = pygame.mouse.get_pos()[0] // 60
     idx = row * 8 + col
@@ -159,7 +174,7 @@ class Board:
 
 
     if piece == "" or (piece.isupper() and self.FEN.split(" ")[1] == "b") or (piece.islower() and self.FEN.split(" ")[1] == "w"):
-      self.highlighted_legal_moves = []
+      # self.highlighted_legal_moves = []
       return
 
     legal_moves = legal_moves.get(self.active_square, [])

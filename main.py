@@ -7,11 +7,13 @@ from piece import Piece
 pygame.init()
 screen = pygame.display.set_mode((480, 480))
 clock = pygame.time.Clock()
+pygame.display.set_caption("Dumb and Dumber Gambit, Blunder Variation: Chess")
 running = True
 
 board = board.Board()
 moves = moves.Moves()
 board.load_fen()
+board.update_fen()
 board.print_board(screen)
 
 while running:
@@ -25,7 +27,7 @@ while running:
         
     if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
       board.mouse_up()
-      board.update_fen()
+      # board.update_fen()
       board.load_fen()
 
   # fill the screen with a color to wipe away anything from last frame
