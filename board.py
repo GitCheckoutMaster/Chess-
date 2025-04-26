@@ -9,7 +9,7 @@ class Board:
     self.highlighted_square = []
     self.highlighted_legal_moves = []
     # self.FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-    self.FEN = "8/8/1r4q1/4b3/2B5/Q4R2/8/8 w - - 0 1"
+    self.FEN = "4k3/8/1r4q1/4b3/2B5/Q4R2/8/4K3 b - - 0 1"
     self.board = [""] * 64
     # self.board = [
     #   "r", "n", "b", "q", "k", "b", "n", "r",
@@ -104,7 +104,7 @@ class Board:
     
     self.update_fen()
 
-  def mouse_up(self):
+  def mouse_up(self, move):
     mouse_x, mouse_y = pygame.mouse.get_pos()
     row = mouse_y // 60
     col = mouse_x // 60
@@ -127,14 +127,14 @@ class Board:
       if piece == "":
         self.board[index] = self.active_piece
         self.highlight_square(self.active_square, index)
-        self.change_turn()
+        self.change_turn(move)
       else:
         active_piece_color = 8 if self.active_piece.isupper() else 16
         target_piece_color = 8 if piece.isupper() else 16
         if active_piece_color != target_piece_color:
           self.board[index] = self.active_piece
           self.highlight_square(self.active_square, index)
-          self.change_turn()
+          self.change_turn(move)
         else:
           self.board[self.active_square] = self.active_piece
           if len(self.highlighted_square) > 1:
@@ -153,9 +153,10 @@ class Board:
     if target_square is not None:
       self.highlighted_square.append(target_square)
 
-  def change_turn(self):
+  def change_turn(self, move):
     print("Changing turn")
     self.highlighted_legal_moves = []
+   
     if self.FEN.split(" ")[1] == "w":
       self.FEN = self.FEN.replace("w", "b")
     else:
@@ -164,6 +165,8 @@ class Board:
       new_FEN = " ".join(self.FEN.split(" ")[:5]) + " " + str(move_number)
       self.FEN = new_FEN
       self.FEN = self.FEN.replace("b", "w")
+
+    move.generate_legal_moves_for_sliding_pieces(self.board, self.FEN.split(" ")[1])
   
   def highlight_legal_moves(self, legal_moves):
     self.highlighted_legal_moves = []

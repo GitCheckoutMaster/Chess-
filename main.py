@@ -15,6 +15,7 @@ moves = moves.Moves()
 board.load_fen()
 board.update_fen()
 board.print_board(screen)
+moves.generate_legal_moves_for_sliding_pieces(board.board, board.FEN.split(" ")[1])
 
 while running:
   for event in pygame.event.get():
@@ -26,7 +27,7 @@ while running:
       board.load_fen()
         
     if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-      board.mouse_up()
+      board.mouse_up(moves)
       # board.update_fen()
       board.load_fen()
 
@@ -35,7 +36,6 @@ while running:
 
   # RENDER YOUR GAME HERE
   board.print_board(screen)
-  moves.generate_legal_moves_for_sliding_pieces(board.board, board.FEN.split(" ")[1])
 
   # flip() the display to put your work on screen
   pygame.display.flip()
