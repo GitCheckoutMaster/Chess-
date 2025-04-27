@@ -1,123 +1,71 @@
+from piece import Piece
+import pygame
+
 class Moves:
   def __init__(self):
     self.legal_moves = {}
     self.king_offsets = [1, 7, 8, 9]
     self.pawn_offsets = [8, 16, 7, 9]
-    self.queen_offsets = [1, 7, 8, 9]
+    self.offsets = [1, -1, -8, 8, -7, -9, 9, 7]
     self.rook_offsets = [1, 8]
     self.bishop_offsets = [7, 9]
     self.knight_offsets = [6, 10, 15, 17]
-
-  
-  def generate_moves(self, board, source_idx, offsets, turn):
-    row = source_idx // 8
-    col = source_idx % 8
-    legal_moves = []
-
-    for offset in offsets:
-      
-      target_idx = source_idx
-      i, j = target_idx // 8, target_idx % 8
-      displacement = 0
-
-      while 0 <= target_idx < 64 and (i == row or j == col or (offset == 7 or offset == 9)):
-
-        if displacement == 2 and board[source_idx].lower() == 'k':
-          break
-        
-        if (target_idx != source_idx) and board[target_idx] == "" or (board[target_idx].isupper() and turn == "b") or (board[target_idx].islower() and turn == "w"):
-          
-          # if the king is in check after this move then skip it
-          if self.is_king_in_check(turn, board, source_idx, target_idx):
-            target_idx += offset
-            i = (target_idx // 8)
-            j = (target_idx % 8)
-            displacement += 1
-            continue
-
-          # if the piece is a bishop or queen, check for diagonal moves and break if it hits the edge of the board
-          if (offset == 7 and (row != i - displacement or col != j + displacement)) or (offset == 9 and (row != i - displacement or col != j - displacement)):
-            break
-
-          legal_moves.append(target_idx)
-        
-        # if a piece is in the way, break the loop
-        if (target_idx != source_idx) and (board[target_idx] != "" or board[source_idx].lower() == "k"):
-          break
-
-        
-        # if the piece is a bishop or queen, check for diagonal moves and break if it hits the edge of the board
-        if (target_idx != source_idx) and (offset == 7 or offset == 9) and ((target_idx // 8) == 0 or (target_idx // 8) == 7 or (target_idx % 8) == 0 or (target_idx % 8) == 7):
-          break
-        
-        target_idx += offset
-        i = (target_idx // 8)
-        j = (target_idx % 8)
-        displacement += 1
-
-      target_idx = source_idx
-      i, j = target_idx // 8, target_idx % 8
-      displacement = 0
-      
-      while 0 <= target_idx < 64 and ((i == row or j == col) or (offset == 7 or offset == 9)):
-
-        if displacement == 2 and board[source_idx].lower() == 'k':
-          break
-      
-        if (source_idx != target_idx) and board[target_idx] == "" or (board[target_idx].isupper() and turn == "b") or (board[target_idx].islower() and turn == "w"):
-          
-          # if the king is in check after this move then skip it
-          if self.is_king_in_check(turn, board, source_idx, target_idx):
-            if source_idx == 28 and target_idx == 19:
-              print("King in check")
-            target_idx -= offset
-            i = target_idx // 8
-            j = target_idx % 8
-            displacement += 1
-            continue
-
-          # if the piece is a bishop or queen, check for diagonal moves and break if it hits the edge of the board
-          if (offset == 7 and (row != i + displacement or col != j - displacement)) or (offset == 9 and (row != i + displacement or col != j + displacement)):
-            break
-
-          legal_moves.append(target_idx)
-
-        # if a piece is in the way, break the loop
-        if (target_idx != source_idx) and (board[target_idx] != "" or board[source_idx].lower() == "k"):
-          break
-
-
-        if (target_idx != source_idx) and (offset == 7 or offset == 9) and ((target_idx // 8) == 0 or (target_idx // 8) == 7 or (target_idx % 8) == 0 or (target_idx % 8) == 7):
-          break
-
-        target_idx -= offset
-        i = target_idx // 8
-        j = target_idx % 8
-        displacement += 1
+    self.num_square_to_edge = {}
+    self.precomputed_move_data()
     
+  def precomputed_move_data(self):
+    for file in range(8):
+      for rank in range(8):
+        num_south = 7 - rank
+        num_north = rank
+        num_east = 7 - file
+        num_west = file
+
+        idx = rank * 8 + file
+
+        self.num_square_to_edge[idx] = [
+          num_east, num_west, num_north, num_south, min(num_north, num_east), min(num_north, num_west), min(num_south, num_east), min(num_south, num_west)
+        ]
+
+
+  def generate_moves_for_sliding_pieces(self, board, source_idx):
+    legal_moves = []
+    start_idx, end_idx = 0, 7
+    if board[source_idx].lower() == 'r':
+      start_idx, end_idx = 0, 3
+    elif board[source_idx].lower() == 'b':
+      start_idx, end_idx = 4, 7
+    
+    for direction, offset in enumerate(self.offsets[start_idx:end_idx + 1], start=start_idx):
+
+      for move in range(self.num_square_to_edge[source_idx][direction]):
+        target_idx = source_idx + offset * (move + 1)
+
+        if move > 0 and board[source_idx].lower() == 'k':
+          break
+
+        if self.is_king_in_check(Piece.color(board[source_idx]), board, source_idx, target_idx):
+          continue
+
+        if Piece.are_friendly_pieces(board[source_idx], board[target_idx]):
+          break
+
+        legal_moves.append(target_idx)
+
+        if Piece.are_enemy_pieces(board[source_idx], board[target_idx]):
+          break
+
     return legal_moves
 
 
-  def generate_legal_moves_for_sliding_pieces(self, board, turn):
-    offsets_rook = self.rook_offsets
-    offsets_bishop = self.bishop_offsets
-    offsets_queen = self.queen_offsets
-    offsets_king = self.king_offsets
+  def generate_moves(self, board, turn):
     
-    #Get every piece on the board and loop over their possible moves
-    for i in range(64):
-      if board[i] == "" or (board[i].isupper() and turn == "b") or (board[i].islower() and turn == "w"):
-        continue
-      piece = board[i]
-      self.legal_moves[i] = []
-      if piece.lower() == "r":
-        self.legal_moves[i] = self.generate_moves(board, i, offsets_rook, turn)
-      elif piece.lower() == "b":
-        self.legal_moves[i] = self.generate_moves(board, i, offsets_bishop, turn)
-      elif piece.lower() == "q":
-        self.legal_moves[i] = self.generate_moves(board, i, offsets_queen, turn)
-      elif piece.lower() == "k":
-        self.legal_moves[i] = self.generate_moves(board, i, offsets_king, turn)    
+    for square in range(64):
+      if board[square] != "" and Piece.color(board[square]) == turn:
+        if Piece.is_sliding_piece(board[square]):
+          moves = self.generate_moves_for_sliding_pieces(board, square)  
+          self.legal_moves[square] = moves
+
     
     
   def is_king_in_check(self, turn, board, source_idx, target_idx):

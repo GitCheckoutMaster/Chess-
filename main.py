@@ -15,7 +15,7 @@ moves = moves.Moves()
 board.load_fen()
 board.update_fen()
 board.print_board(screen)
-moves.generate_legal_moves_for_sliding_pieces(board.board, board.FEN.split(" ")[1])
+moves.generate_moves(board.board, board.FEN.split(" ")[1])
 
 while running:
   for event in pygame.event.get():

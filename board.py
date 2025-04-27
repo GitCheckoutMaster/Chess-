@@ -166,7 +166,7 @@ class Board:
       self.FEN = new_FEN
       self.FEN = self.FEN.replace("b", "w")
 
-    move.generate_legal_moves_for_sliding_pieces(self.board, self.FEN.split(" ")[1])
+    move.generate_moves(self.board, self.FEN.split(" ")[1])
   
   def highlight_legal_moves(self, legal_moves):
     self.highlighted_legal_moves = []

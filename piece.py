@@ -53,3 +53,31 @@ class Piece:
   @staticmethod
   def get_piece_value(symbol):
     return Piece.pieces.get(symbol, None)
+
+  @staticmethod
+  def color(piece):
+    if piece.islower():
+      return 'b'
+    else:
+      return 'w'
+  
+  @staticmethod
+  def is_white(piece):
+    return piece.isupper()
+  
+  @staticmethod
+  def is_black(piece):
+    return piece.islower()
+  
+  @staticmethod
+  def are_friendly_pieces(piece1, piece2):
+    return (Piece.is_white(piece1) and Piece.is_white(piece2)) or (Piece.is_black(piece1) and Piece.is_black(piece2))
+  
+  @staticmethod
+  def are_enemy_pieces(piece1, piece2):
+    return (Piece.is_white(piece1) and Piece.is_black(piece2)) or (Piece.is_black(piece1) and Piece.is_white(piece2))
+  
+  @staticmethod
+  def is_sliding_piece(piece):
+    return piece.lower() in ['r', 'b', 'q', 'k']
+  
