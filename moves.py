@@ -9,7 +9,7 @@ class Moves:
     self.offsets = [1, -1, -8, 8, -7, -9, 9, 7]
     self.rook_offsets = [1, 8]
     self.bishop_offsets = [7, 9]
-    self.knight_offsets = [6, 10, 15, 17]
+    self.knight_offsets = [6, 10, 15, 17, -6, -10, -15, -17]
     self.num_square_to_edge = {}
     self.precomputed_move_data()
     
@@ -56,6 +56,63 @@ class Moves:
           break
 
     return legal_moves
+  
+
+  def generate_moves_for_knight(self, board, source_idx):
+    legal_moves = []
+    for offset in self.knight_offsets:
+      target_idx = source_idx + offset
+      if 0 <= target_idx < 64 and not Piece.are_friendly_pieces(board[source_idx], board[target_idx]):
+        if self.is_king_in_check(Piece.color(board[source_idx]), board, source_idx, target_idx):
+          continue
+
+        target_row = target_idx // 8
+        target_col = target_idx % 8
+        source_row = source_idx // 8
+        source_col = source_idx % 8
+
+        if abs(target_row - source_row) > 2 or abs(target_col - source_col) > 2:
+          continue
+
+        legal_moves.append(target_idx)
+    return legal_moves
+  
+
+  def generate_moves_for_pawn(self, board, source_idx, turn):
+    
+    legal_moves = []
+    starting_rank = 1 if turn == 'b' else 6
+    target_idx = source_idx + 8 if turn == 'b' else source_idx - 8
+    
+    # Single move forward
+    if 0 <= target_idx < 64 and board[target_idx] == "" and not self.is_king_in_check(turn, board, source_idx, target_idx):
+      legal_moves.append(target_idx)
+      offset = 8 if turn == 'b' else -8
+
+      # Double move forward
+      if (source_idx // 8 == starting_rank) and (board[target_idx + offset] == ""):
+        target_idx += offset
+        if 0 <= target_idx < 64 and board[target_idx] == "" and not self.is_king_in_check(turn, board, source_idx, target_idx):
+          legal_moves.append(target_idx)
+
+    # Diagonal captures
+    for offset in [7, 9]:
+      target_idx = (source_idx + offset) if turn == 'b' else (source_idx - offset)
+      if 0 <= target_idx < 64 and (Piece.are_enemy_pieces(board[source_idx], board[target_idx]) or board[target_idx] == '_'):
+        # it is is '_', means that it is en passant capturable by a pawn
+        if self.is_king_in_check(turn, board, source_idx, target_idx):
+          continue
+
+        target_row = target_idx // 8
+        source_row = source_idx // 8
+
+        if abs(target_row - source_row) != 1:
+          continue
+
+        legal_moves.append(target_idx)
+
+    return legal_moves
+
 
 
   def generate_moves(self, board, turn):
@@ -64,6 +121,12 @@ class Moves:
       if board[square] != "" and Piece.color(board[square]) == turn:
         if Piece.is_sliding_piece(board[square]):
           moves = self.generate_moves_for_sliding_pieces(board, square)  
+          self.legal_moves[square] = moves
+        elif board[square].lower() == 'n':
+          moves = self.generate_moves_for_knight(board, square)
+          self.legal_moves[square] = moves
+        elif board[square].lower() == 'p':
+          moves = self.generate_moves_for_pawn(board, square, turn)
           self.legal_moves[square] = moves
 
     
