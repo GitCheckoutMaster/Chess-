@@ -142,12 +142,31 @@ class Board:
           self.clean_up()
           if self.active_square // 8 == 1 and index // 8 == 3:
             self.board[index - 8] = "_"
+            self.en_passant = 'b' if self.active_piece.isupper() else 'w'
+            same_move = True
           elif self.active_square // 8 == 6 and index // 8 == 4:
             self.board[index + 8] = "_"
-          self.en_passant = 'b' if self.active_piece.isupper() else 'w'
-          print(self.en_passant)
-          same_move = True
+            self.en_passant = 'b' if self.active_piece.isupper() else 'w'
+            same_move = True
+
+        # castling
+        elif self.active_piece.lower() == 'k' and abs(self.active_square - index) == 2:
+          if index == 2:
+            self.board[0] = ""
+            self.board[3] = "r"
+          elif index == 6:
+            self.board[7] = ""
+            self.board[5] = "r"
+          elif index == 58:
+            self.board[56] = ""
+            self.board[59] = "R"
+          elif index == 62:
+            self.board[63] = ""
+            self.board[61] = "R"
+          self.highlight_square(self.active_square, index)
         
+        # if king is moved then update the castling rights in FEN
+        self.remove_castling_rights()
         self.change_turn(move)
       
       # en passant capture
@@ -158,9 +177,9 @@ class Board:
         else:
           self.board[index - 8] = ""
         
+        self.clean_up()
         self.change_turn(move)
         self.highlight_square(self.active_square, index)
-        self.clean_up()
 
       # capture of enemy piece or stop at friendly piece
       else:
@@ -171,6 +190,8 @@ class Board:
         if active_piece_color != target_piece_color:
           self.board[index] = self.active_piece
           self.highlight_square(self.active_square, index)
+          self.clean_up()
+          self.remove_castling_rights()
           self.change_turn(move)
         # friendly piece
         else:
@@ -182,7 +203,8 @@ class Board:
       self.active_piece = None
       self.active_square = None
     
-    if not same_move and self.en_passant is not None and self.FEN.split(" ")[1] == self.en_passant:
+    if not same_move:
+      # print("Cleaning up en passant")
       self.clean_up()
 
     self.update_fen()
@@ -196,6 +218,29 @@ class Board:
       self.highlighted_square.append(active_square)
     if target_square is not None:
       self.highlighted_square.append(target_square)
+
+  
+  # remove castling rights from FEN
+  def remove_castling_rights(self):
+    piece_moved = self.active_piece
+    if piece_moved.lower() == 'k':
+      if Piece.color(piece_moved) == 'w':
+        self.FEN = self.FEN.replace("KQ", "--")
+      else:
+        self.FEN = self.FEN.replace("kq", "--")
+    elif piece_moved.lower() == 'r':
+      if Piece.color(piece_moved) == 'w':
+        if self.active_square == 56:
+          self.FEN = self.FEN.replace("Q", "-")
+        elif self.active_square == 63:
+          self.FEN = self.FEN.replace("K", "-")
+      else:
+        if self.active_square == 0:
+          self.FEN = self.FEN.replace("q", "-")
+        elif self.active_square == 7:
+          self.FEN = self.FEN.replace("k", "-")
+
+    print("Removing castling rights: ", self.FEN)
 
 
   # Change the turn in FEN and update the move number
@@ -212,7 +257,7 @@ class Board:
       self.FEN = new_FEN
       self.FEN = self.FEN.replace("b", "w")
 
-    move.generate_moves(self.board, self.FEN.split(" ")[1])
+    move.generate_moves(self.board, self.FEN.split(" ")[1], self.FEN.split(" ")[2])
   
 
   # Highlight legal moves of clicked piece 
@@ -229,7 +274,7 @@ class Board:
       return
 
     legal_moves = legal_moves.get(self.active_square, [])
-    print(piece, legal_moves)
+    # print(piece, legal_moves)
     for move in legal_moves:
       self.highlighted_legal_moves.append(move)
     
@@ -237,7 +282,8 @@ class Board:
   # Clean up the board 
   def clean_up(self):
     self.highlighted_legal_moves = []
-    self.en_passant = False
+    self.en_passant = None
+    self.same_move = False
 
     for square in range(64):
       if self.board[square] == "_":

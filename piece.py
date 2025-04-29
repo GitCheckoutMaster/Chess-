@@ -79,5 +79,5 @@ class Piece:
   
   @staticmethod
   def is_sliding_piece(piece):
-    return piece.lower() in ['r', 'b', 'q', 'k']
+    return piece.lower() in ['r', 'b', 'q']
   
