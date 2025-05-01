@@ -1,45 +1,60 @@
 import pygame
-import board
-import moves
-from piece import Piece
+from two_player_chess import two_player_game
+from utilities.button import Button
 
 # pygame setup
 pygame.init()
 screen = pygame.display.set_mode((480, 480))
 clock = pygame.time.Clock()
 pygame.display.set_caption("Dumb and Dumber Gambit, Blunder Variation: Chess")
-running = True
 
-board = board.Board()
-moves = moves.Moves()
-board.load_fen()
-board.update_fen()
-board.print_board(screen)
-moves.generate_moves(board.board, board.FEN.split(" ")[1], board.FEN.split(" ")[2])
 
-while running:
-  for event in pygame.event.get():
-    if event.type == pygame.QUIT:
-      running = False
-    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-      board.mouse_down()
-      board.highlight_legal_moves(moves.legal_moves)
-      board.load_fen()
-        
-    if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-      board.mouse_up(moves)
-      # board.update_fen()
-      board.load_fen()
+def main_menu():
+  # Main menu setup
+  screen.fill((0, 0, 0))
+  font = pygame.font.Font(None, 74)
+  title_text = font.render("Chess", True, (255, 255, 255))
+  title_rect = title_text.get_rect(center=(240, 100))
 
-  # fill the screen with a color to wipe away anything from last frame
-  screen.fill("black")
+  # Button setup
+  button_font = pygame.font.Font(None, 36)
+  two_player_button = Button((240, 200), "Two Player", button_font, (255, 255, 255), (200, 200, 200))
+  one_player_button = Button((240, 300), "Dumb and Dumber", button_font, (255, 255, 255), (200, 200, 200))
+  quit_button = Button((240, 400), "Quit", button_font, (255, 255, 255), (200, 200, 200))
+  
+  # Main menu loop
+  running = True
+  while running:
+    for event in pygame.event.get():
+      if event.type == pygame.QUIT:
+        running = False
 
-  # RENDER YOUR GAME HERE
-  board.print_board(screen)
+      if event.type == pygame.MOUSEBUTTONDOWN:
+        if two_player_button.check_for_input(pygame.mouse.get_pos()):
+          two_player_chess()
+        elif one_player_button.check_for_input(pygame.mouse.get_pos()):
+          one_player_chess()
+        elif quit_button.check_for_input(pygame.mouse.get_pos()):
+          running = False
 
-  # flip() the display to put your work on screen
-  pygame.display.flip()
+    screen.fill((0, 0, 0))
+    screen.blit(title_text, title_rect)
 
-  clock.tick(60)  # limits FPS to 60
+    for button in [two_player_button, one_player_button, quit_button]:
+      button.change_color(pygame.mouse.get_pos())
+      button.update(screen)
 
-pygame.quit()
+    pygame.display.flip()
+    clock.tick(60)
+
+def two_player_chess():
+  two_player_game(screen, clock)
+
+def one_player_chess():
+  pass
+
+def import_in_chess():
+  pass
+
+main_menu()
+# two_player_chess()

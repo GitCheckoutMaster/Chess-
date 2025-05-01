@@ -89,7 +89,7 @@ class Moves:
     offset = 8 if turn == 'b' else -8
 
     # Double move forward
-    if (source_idx // 8 == starting_rank) and (board[target_idx + offset] == ""):
+    if (source_idx // 8 == starting_rank) and (board[target_idx + offset] == "") and (board[target_idx] == ""):
       target_idx += offset
       if 0 <= target_idx < 64 and board[target_idx] == "" and not self.is_king_in_check(turn, board, source_idx, target_idx):
         legal_moves.append(target_idx)
