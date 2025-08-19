@@ -164,22 +164,25 @@ class Moves:
 
   def generate_moves(self, board, turn, castling_rights):
     
+    current_legal_moves = {}
+
     for square in range(64):
       if board[square] != "" and Piece.color(board[square]) == turn:
         if Piece.is_sliding_piece(board[square]):
           moves = self.generate_moves_for_sliding_pieces(board, square)  
-          self.legal_moves[square] = moves
+          current_legal_moves[square] = moves
         elif board[square].lower() == 'n':
           moves = self.generate_moves_for_knight(board, square)
-          self.legal_moves[square] = moves
+          current_legal_moves[square] = moves
         elif board[square].lower() == 'p':
           moves = self.generate_moves_for_pawn(board, square, turn)
-          self.legal_moves[square] = moves
+          current_legal_moves[square] = moves
         elif board[square].lower() == 'k':
           moves = self.generate_moves_for_king(board, square, turn, castling_rights)
-          self.legal_moves[square] = moves
+          current_legal_moves[square] = moves
 
-    
+    self.legal_moves = current_legal_moves.copy()
+    return current_legal_moves    
     
   def is_king_in_check(self, turn, board, source_idx, target_idx):
     

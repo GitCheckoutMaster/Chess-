@@ -1,5 +1,6 @@
 import pygame
 from two_player_chess import two_player_game
+from zero_elo_bot import zero_elo_opponent
 from utilities.button import Button
 
 # pygame setup
@@ -47,11 +48,11 @@ def main_menu():
     pygame.display.flip()
     clock.tick(60)
 
-def two_player_chess():
+def two_player_chess(): 
   two_player_game(screen, clock)
 
 def one_player_chess():
-  pass
+  zero_elo_opponent(screen, clock)
 
 def import_in_chess():
   pass
