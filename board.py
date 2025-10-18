@@ -164,6 +164,12 @@ class Board:
             self.board[63] = ""
             self.board[61] = "R"
           self.highlight_square(self.active_square, index)
+
+        # promotion
+        if self.active_piece.lower() == 'p':
+          if (self.active_piece.isupper() and index // 8 == 0) or (self.active_piece.islower() and index // 8 == 7):
+            promoted_piece = 'Q' if self.active_piece.isupper() else 'q'
+            self.board[index] = promoted_piece
         
         # if king is moved then update the castling rights in FEN
         self.remove_castling_rights()
@@ -188,7 +194,12 @@ class Board:
 
         # capture
         if active_piece_color != target_piece_color:
-          self.board[index] = self.active_piece
+          # promotion on capture
+          if (self.active_piece.isupper() and index // 8 == 0) or (self.active_piece.islower() and index // 8 == 7):
+            promoted_piece = 'Q' if self.active_piece.isupper() else 'q'
+            self.board[index] = promoted_piece
+          else:
+            self.board[index] = self.active_piece
           self.highlight_square(self.active_square, index)
           self.clean_up()
           self.remove_castling_rights()
@@ -247,7 +258,7 @@ class Board:
   def change_turn(self, move):
     print("Changing turn")
     self.highlighted_legal_moves = []
-   
+  
     if self.FEN.split(" ")[1] == "w":
       self.FEN = self.FEN.replace("w", "b")
     else:
@@ -277,7 +288,7 @@ class Board:
     # print(piece, legal_moves)
     for move in legal_moves:
       self.highlighted_legal_moves.append(move)
-    
+
 
   # Clean up the board 
   def clean_up(self):

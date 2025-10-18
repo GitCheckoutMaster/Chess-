@@ -161,6 +161,13 @@ class Moves:
     return legal_moves
 
 
+  def checkmate(self):
+    print("Checkmate!")
+
+  
+  def stalemate(self):
+    print("Stalemate!")
+
 
   def generate_moves(self, board, turn, castling_rights):
     
@@ -181,8 +188,17 @@ class Moves:
           moves = self.generate_moves_for_king(board, square, turn, castling_rights)
           current_legal_moves[square] = moves
 
+    has_any_move = any(len(moves) > 0 for moves in current_legal_moves.values())
+
+    if not has_any_move:
+        if self.is_king_in_check(turn, board, -1, -1):
+            self.checkmate()
+        else:
+            self.stalemate()
+
+
     self.legal_moves = current_legal_moves.copy()
-    return current_legal_moves    
+    return current_legal_moves
     
   def is_king_in_check(self, turn, board, source_idx, target_idx):
     
@@ -194,8 +210,9 @@ class Moves:
           return i
       return -1
 
-    new_board[target_idx] = board[source_idx]
-    new_board[source_idx] = ""
+    if source_idx != -1 and target_idx != -1:
+      new_board[target_idx] = board[source_idx]
+      new_board[source_idx] = "" if source_idx != target_idx else board[source_idx]
     king_position = get_king_position(new_board, turn)
 
     for offset in self.rook_offsets:
@@ -220,55 +237,67 @@ class Moves:
       row = king_position // 8
       col = king_position % 8
 
-      for offset in self.bishop_offsets:
-        # check for pawn checks
-        if row != 0 and col != 0 and offset == 7:
-          if Piece.color(new_board[king_position]) == 'w':
-            if new_board[king_position - offset] == 'p' or new_board[king_position - offset] == 'b' or new_board[king_position - offset] == 'q':
-              return True
-          else:
-            if new_board[king_position + offset] == 'P' or new_board[king_position + offset] == 'B' or new_board[king_position + offset] == 'Q':
-              return True
-            
-        elif row != 0 and col != 7 and offset == 9:
-          if Piece.color(new_board[king_position]) == 'w':
-            if new_board[king_position - offset] == 'p' or new_board[king_position - offset] == 'b' or new_board[king_position - offset] == 'q':
-              return True
-          else:
-            if new_board[king_position + offset] == 'P' or new_board[king_position + offset] == 'B' or new_board[king_position + offset] == 'Q':
-              return True
-            
-        for direction in [1, -1]:
-          check = king_position
-          current_row = row
-          current_col = col
+    for offset in self.bishop_offsets:
+      # check for pawn checks
+      if row != 0 and col != 0 and offset == 7:
+        if Piece.color(new_board[king_position]) == 'w':
+          if new_board[king_position - offset] == 'p' or new_board[king_position - offset] == 'b' or new_board[king_position - offset] == 'q':
+            return True
+        else:
+          if new_board[king_position + offset] == 'P' or new_board[king_position + offset] == 'B' or new_board[king_position + offset] == 'Q':
+            return True
           
-          while True:
-            if offset == 7:
-              if direction == 1:
-                current_row += 1
-                current_col -= 1
-              else:
-                current_row -= 1
-                current_col += 1
-            elif offset == 9:
-              if direction == 1:
-                current_row += 1
-                current_col += 1
-              else:
-                current_row -= 1
-                current_col -= 1
+      elif row != 0 and col != 7 and offset == 9:
+        if Piece.color(new_board[king_position]) == 'w':
+          if new_board[king_position - offset] == 'p' or new_board[king_position - offset] == 'b' or new_board[king_position - offset] == 'q':
+            return True
+        else:
+          if new_board[king_position + offset] == 'P' or new_board[king_position + offset] == 'B' or new_board[king_position + offset] == 'Q':
+            return True
+          
+      for direction in [1, -1]:
+        check = king_position
+        current_row = row
+        current_col = col
+        
+        while True:
+          if offset == 7:
+            if direction == 1:
+              current_row += 1
+              current_col -= 1
+            else:
+              current_row -= 1
+              current_col += 1
+          elif offset == 9:
+            if direction == 1:
+              current_row += 1
+              current_col += 1
+            else:
+              current_row -= 1
+              current_col -= 1
 
-            if not (0 <= current_row < 8 and 0 <= current_col < 8):
-              break  # off the board
+          if not (0 <= current_row < 8 and 0 <= current_col < 8):
+            break  # off the board
 
-            check = current_row * 8 + current_col
+          check = current_row * 8 + current_col
 
-            if (turn == 'b' and (new_board[check] == 'B' or new_board[check] == 'Q')) or (turn == 'w' and (new_board[check] == 'b' or new_board[check] == 'q')):
-              return True
+          if (turn == 'b' and (new_board[check] == 'B' or new_board[check] == 'Q')) or (turn == 'w' and (new_board[check] == 'b' or new_board[check] == 'q')):
+            return True
 
-            if new_board[check] != "":
-              break
+          if new_board[check] != "":
+            break
+
+    for offset in self.knight_offsets:
+      check = king_position + offset
+      if 0 <= check < 64:
+        target_row = check // 8
+        target_col = check % 8
+        king_row = king_position // 8
+        king_col = king_position % 8
+
+        if abs(target_row - king_row) <= 2 and abs(target_col - king_col) <= 2:
+          if (turn == 'b' and new_board[check] == 'N') or (turn == 'w' and new_board[check] == 'n'):
+            return True
 
 
     return False

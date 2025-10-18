@@ -20,14 +20,14 @@ def two_player_game(screen, clock):
       if event.type == pygame.QUIT:
         running = False
       if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+        board.load_fen()
         board.mouse_down()
         board.highlight_legal_moves(moves.legal_moves)
-        board.load_fen()
           
       if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+        board.load_fen()
         board.mouse_up(moves)
         # board.update_fen()
-        board.load_fen()
 
     # fill the screen with a color to wipe away anything from last frame
     screen.fill("black")
